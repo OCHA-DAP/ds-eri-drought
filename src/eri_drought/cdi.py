@@ -7,6 +7,7 @@ downloaded in full.
 """
 
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import geopandas as gpd
 import numpy as np
@@ -76,6 +77,86 @@ def class_counts_by_adm1(
         for v, n in zip(u, c):
             rows.append({"PCODE": row.PCODE, "cdi": int(v), "n": int(n)})
     return pd.DataFrame(rows)
+
+
+def list_dekadal_files(year: int) -> dict[pd.Timestamp, str]:
+    """Dekad start date -> download URL for one year's dekadal CDI dataset.
+
+    Names are `eadw-cdi-data-YYYY-MM-DD.tif` or, for 2022-2023, `...cdi_MMDD.tif`.
+    """
+    _hdx_config()
+    ds = Dataset.read_from_hdx(f"igad-region-dekadal-combined-drought-indicator-cdi-{year}")
+    out = {}
+    for res in ds.get_resources():
+        name = res["name"].lower()
+        if m := re.search(r"(\d{4})-(\d{2})-(\d{2})\.tif$", name):
+            date = pd.Timestamp(int(m[1]), int(m[2]), int(m[3]))
+        elif m := re.search(r"_(\d{2})(\d{2})\.tif$", name):
+            date = pd.Timestamp(year, int(m[1]), int(m[2]))
+        else:
+            continue
+        out[date] = res["url"]
+    return dict(sorted(out.items()))
+
+
+def dekadal_blob_name(date: pd.Timestamp) -> str:
+    return f"{PROJECT_PREFIX}/processed/icpac_cdi/dekadal/eri_cdi_dekadal_{date:%Y-%m-%d}.tif"
+
+
+def _eritrea_bounds(adm1: gpd.GeoDataFrame, buffer_deg: float) -> tuple[float, ...]:
+    minx, miny, maxx, maxy = adm1.total_bounds
+    return (minx - buffer_deg, miny - buffer_deg, maxx + buffer_deg, maxy + buffer_deg)
+
+
+def _upload_window(url: str, bounds: tuple[float, ...], name: str) -> None:
+    arr, transform = read_window(url, bounds)
+    ny, nx = arr.shape
+    x = transform.c + transform.a * (np.arange(nx) + 0.5)
+    y = transform.f + transform.e * (np.arange(ny) + 0.5)
+    da = xr.DataArray(arr.astype("float32"), coords={"y": y, "x": x}, dims=("y", "x"))
+    da = da.rio.write_crs("EPSG:4326").rio.write_nodata(np.nan)
+    da.attrs.update({"source": "ICPAC East Africa Drought Watch CDI", "source_url": url})
+    stratus.upload_cog_to_blob(da, name, stage="dev")
+
+
+def _existing(prefix: str) -> set[str]:
+    cc = stratus.get_container_client(stage="dev")
+    return {b.name for b in cc.list_blobs(name_starts_with=prefix)}
+
+
+def save_eritrea_dekadal_cogs(
+    years: list[int], adm1: gpd.GeoDataFrame, buffer_deg: float = 0.1, workers: int = 6
+) -> list[str]:
+    """Dekadal equivalent of `save_eritrea_cogs`; reruns skip dekads already on blob."""
+    bounds = _eritrea_bounds(adm1, buffer_deg)
+    existing = _existing(f"{PROJECT_PREFIX}/processed/icpac_cdi/dekadal/")
+    todo = {}
+    for year in years:
+        for date, url in list_dekadal_files(year).items():
+            todo[dekadal_blob_name(date)] = url
+
+    def run(name: str) -> str:
+        _upload_window(todo[name], bounds, name)
+        print(f"saved {name}", flush=True)
+        return name
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [pool.submit(run, n) for n in todo if n not in existing]
+        for f in as_completed(futures):
+            f.result()
+    return sorted(todo)
+
+
+def dekadal_counts_from_blob(adm1: gpd.GeoDataFrame) -> pd.DataFrame:
+    """Per admin 1 pixel counts of each CDI value for every dekadal COG on blob."""
+    frames = []
+    for name in sorted(_existing(f"{PROJECT_PREFIX}/processed/icpac_cdi/dekadal/")):
+        date = pd.Timestamp(re.search(r"(\d{4}-\d{2}-\d{2})\.tif$", name)[1])
+        da = stratus.open_blob_cog(name).squeeze(drop=True).load()
+        df = class_counts_by_adm1(da.values, da.rio.transform(), adm1)
+        df["date"] = date
+        frames.append(df)
+    return pd.concat(frames, ignore_index=True)
 
 
 def cog_blob_name(year: int, month: int) -> str:

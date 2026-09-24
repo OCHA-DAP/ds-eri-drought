@@ -24,6 +24,7 @@
 # dekads are `final`; only the September 2026 dekads are `prelim`.
 
 # %%
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
@@ -297,34 +298,57 @@ share = (
     * 100
 ).rename("pct_area").reset_index()
 
-# %% tags=["fig-cdi-bars"]
-years = sorted(share.year.unique())
-fig, axes = plt.subplots(3, 2, figsize=(12, 9), sharey=True)
-for ax, p in zip(axes.flat, ORDER):
-    d = share[share.PCODE == p].pivot_table(
-        index=["year", "month"], columns="group", values="pct_area", fill_value=0
-    )
-    idx = pd.MultiIndex.from_product([years, JJA])
-    d = d.reindex(idx, fill_value=0)
-    x = np.array([i * 4 + j for i in range(len(years)) for j in range(3)], dtype=float)
+# %% [markdown]
+# ICPAC also publishes the CDI every 10 days. The timeline below uses those dekadal
+# files (clipped to Eritrea and cached on blob), January 2020 to the latest dekad.
+# Shares are of each region's full area; value 15 is left out as above.
+
+# %% tags=["fig-cdi-timeline"]
+DEKADAL_BLOB = f"{PROJECT_PREFIX}/processed/cdi_adm1_dekadal_counts.parquet"
+REFRESH_DEKADAL = False
+if REFRESH_DEKADAL:
+    dek = cdi.dekadal_counts_from_blob(adm1)
+    stratus.upload_parquet_to_blob(dek, DEKADAL_BLOB, stage="dev")
+else:
+    dek = stratus.load_parquet_from_blob(DEKADAL_BLOB, stage="dev")
+dek["group"] = dek.cdi.map(to_group).fillna("No class")
+dek.loc[dek.cdi == 15, "group"] = "Not documented"
+dek_share = (
+    dek.groupby(["PCODE", "date", "group"]).n.sum() / dek.groupby(["PCODE", "date"]).n.sum() * 100
+).unstack("group").fillna(0)
+dek_share = dek_share.reindex(columns=[g for g, _, _ in GROUPS], fill_value=0)
+
+fig, axes = plt.subplots(len(ORDER), 1, figsize=(12, 11), sharex=True, sharey=True)
+for ax, p in zip(axes, ORDER):
+    d = dek_share.loc[p].sort_index()
+    for yr in range(d.index.min().year, d.index.max().year + 1):
+        ax.axvspan(pd.Timestamp(yr, 6, 1), pd.Timestamp(yr, 10, 1), color=NEUTRAL, lw=0, zorder=0)
+    # each dekad's value holds until the next dekad starts
+    x = list(d.index) + [d.index[-1] + pd.Timedelta(days=10)]
     bottom = np.zeros(len(d))
     for g, _, color in GROUPS:
-        if g in d:
-            ax.bar(x, d[g], bottom=bottom, color=color, width=0.9, label=g, edgecolor="white", lw=0.5)
-            bottom += d[g].values
-    ax.set_xticks(x[1::3], years)
-    ax.set_title(LABEL[p], loc="left")
-    ax.set_ylabel("% of admin 1 area")
+        vals = d[g].values
+        ax.fill_between(
+            x, np.append(bottom, bottom[-1]), np.append(bottom + vals, (bottom + vals)[-1]),
+            step="post", color=color, lw=0, label=g, zorder=2,
+        )
+        bottom = bottom + vals
     ax.set_ylim(0, 100)
-handles, labels = axes.flat[0].get_legend_handles_labels()
-for a in axes.flat[1:]:
-    for h, lab in zip(*a.get_legend_handles_labels()):
-        if lab not in labels:
-            handles.append(h)
-            labels.append(lab)
-fig.legend(handles, labels, loc="upper right", ncol=5, frameon=False)
-fig.suptitle("CDI class share of area: June, July, August bars for each year", x=0.01, ha="left")
-fig.tight_layout(rect=(0, 0, 1, 0.95))
+    ax.set_yticks([0, 50, 100])
+    ax.set_title(LABEL[p], loc="left", fontsize=9)
+    ax.set_ylabel("% of area")
+axes[-1].set_xlim(dek_share.index.get_level_values("date").min(), d.index.max() + pd.Timedelta(days=20))
+axes[-1].xaxis.set_major_locator(mdates.YearLocator())
+axes[-1].xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+handles, labels = axes[0].get_legend_handles_labels()
+handles.append(plt.Rectangle((0, 0), 1, 1, color=NEUTRAL))
+labels.append("June to September")
+fig.legend(handles, labels, loc="upper right", ncol=len(labels), frameon=False, fontsize=8)
+fig.suptitle(
+    f"ICPAC drought indicator every 10 days, Jan 2020 to {d.index.max():%d %b %Y}",
+    x=0.01, ha="left",
+)
+fig.tight_layout(rect=(0, 0, 1, 0.97))
 plt.show()
 
 # %% [markdown]

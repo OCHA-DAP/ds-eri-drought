@@ -15,7 +15,7 @@ NOTEBOOK = ROOT / "notebooks" / "01_jja_season_2026.ipynb"
 PAGES = ROOT / "pages"
 SITE = ROOT / "_site"
 FIGS = SITE / "season-2026" / "figs"
-EXPECTED = {"rainfall-heatmap", "rainfall-10day", "ndvi-10day", "cdi-bars", "cdi-maps"}
+EXPECTED = {"rainfall-heatmap", "rainfall-10day", "ndvi-10day", "cdi-timeline", "cdi-maps"}
 
 
 def main() -> None:

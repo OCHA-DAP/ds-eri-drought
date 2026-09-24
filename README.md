@@ -26,6 +26,8 @@ Everything is on the dev blob, `projects` container:
 | `ds-eri-drought/raw/eri-ndvi-subnat-full.csv` | WFP dekadal NDVI, admin 1 and 2 |
 | `ds-eri-drought/processed/cdi_adm1_jja_counts.parquet` | CDI pixel counts per admin 1, class value, Jun to Aug 2020 to 2026 |
 | `ds-eri-drought/processed/icpac_cdi/eri_cdi_monthly_YYYY-MM.tif` | Monthly CDI COGs clipped to Eritrea, every month published on HDX from 2020 to 2026 |
+| `ds-eri-drought/processed/icpac_cdi/dekadal/eri_cdi_dekadal_YYYY-MM-DD.tif` | Dekadal (10-day) CDI COGs clipped to Eritrea, every dekad published on HDX from 2020 to 2026 |
+| `ds-eri-drought/processed/cdi_adm1_dekadal_counts.parquet` | Dekadal CDI pixel counts per admin 1 and class value |
 
 The CDI COGs are the ICPAC regional GeoTIFFs cut to the Eritrea admin 1 bounding box plus
 0.1°: a rectangle, not masked to the border, values unchanged (float32, NaN nodata).
