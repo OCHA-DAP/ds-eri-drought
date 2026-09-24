@@ -66,6 +66,12 @@ adm1 = data.load_adm1()
 rain = data.load_rainfall_adm1()
 ndvi = data.load_ndvi_adm1()
 ORDER = ["ER1", "ER2", "ER3", "ER4", "ER5", "ER6"]
+
+
+def month_ticks(ax, dekads: pd.Index) -> None:
+    """Tick the first dekad of each month, labelled with the month name."""
+    pos = [i for i, d in enumerate(dekads) if d.endswith("-01")]
+    ax.set_xticks(pos, [pd.Timestamp(f"2000-{dekads[i]}").strftime("%b") for i in pos])
 LABEL = {p: f"{data.ADM1_NAMES[p]} ({p})" for p in ORDER}
 
 # %% [markdown]
@@ -108,7 +114,7 @@ for ax, p in zip(axes.flat, ORDER):
         loc="left",
         fontsize=9,
     )
-    ax.set_ylabel("JJA rainfall (mm)")
+    ax.set_ylabel("June to August rainfall (mm)")
 fig.suptitle(
     f"June to August rainfall by admin 1, 1981 to {CURRENT} "
     f"(blue: {CURRENT}; dashed: long-term average)",
@@ -136,7 +142,7 @@ for j in np.where(pct.columns == CURRENT)[0]:
                 color="white" if v < 65 else "#0b0b0b")
 fig.colorbar(im, ax=ax, label="% of average", shrink=0.9, extend="both")
 ax.set_title(
-    "JJA rainfall, % of long-term average (100% and above: grey; 2026 outlined in blue)",
+    "June to August rainfall, % of 1989-2018 average (100% and above: grey; 2026 outlined in blue)",
     loc="left",
 )
 plt.show()
@@ -170,11 +176,11 @@ for ax, p in zip(axes.flat, ORDER):
     ax.fill_between(x, past["min"], past["max"], color=C_PAST, alpha=0.5, lw=0, label="1981-2025 range")
     ax.plot(x, avg.values, color=C_AVG, lw=1, ls="--", label="average")
     ax.plot(x[: len(cur)], cur.values, color=C_CURRENT, lw=2, marker="o", ms=3, label=str(CURRENT))
-    ax.set_xticks(x[::3], past.index[::3], rotation=45)
+    month_ticks(ax, past.index)
     ax.set_title(LABEL[p], loc="left")
-    ax.set_ylabel("dekadal rainfall (mm)")
+    ax.set_ylabel("10-day rainfall (mm)")
 axes.flat[0].legend(frameon=False, fontsize=8)
-fig.suptitle("Dekadal rainfall, March to October", x=0.01, ha="left")
+fig.suptitle("Rainfall every 10 days, March to October", x=0.01, ha="left")
 fig.tight_layout()
 plt.show()
 
@@ -208,7 +214,7 @@ for ax, p in zip(axes.flat, ORDER):
         loc="left",
         fontsize=9,
     )
-    ax.set_ylabel("JJA mean NDVI, % of avg")
+    ax.set_ylabel("June to August NDVI, % of avg")
 fig.suptitle(f"June to August mean NDVI, % of average, 2003 to {CURRENT}", x=0.01, ha="left")
 fig.tight_layout()
 plt.show()
@@ -224,11 +230,11 @@ for ax, p in zip(axes.flat, ORDER):
     ax.fill_between(x, past["min"], past["max"], color=C_PAST, alpha=0.5, lw=0, label="2003-2025 range")
     ax.axhline(100, color=C_AVG, lw=1, ls="--")
     ax.plot(x[: len(cur)], cur.values, color=C_CURRENT, lw=2, label=str(CURRENT))
-    ax.set_xticks(x[::6], past.index[::6], rotation=45)
+    month_ticks(ax, past.index)
     ax.set_title(LABEL[p], loc="left")
     ax.set_ylabel("NDVI, % of avg")
 axes.flat[0].legend(frameon=False, fontsize=8)
-fig.suptitle(f"Dekadal NDVI % of average: {CURRENT} against 2003-2025", x=0.01, ha="left")
+fig.suptitle(f"NDVI every 10 days, % of average: {CURRENT} against 2003-2025", x=0.01, ha="left")
 fig.tight_layout()
 plt.show()
 
