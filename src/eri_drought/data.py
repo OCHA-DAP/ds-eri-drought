@@ -45,9 +45,10 @@ def _aggregate_adm1(df: pd.DataFrame, value_cols: list[str]) -> pd.DataFrame:
 
 
 def load_rainfall_adm1() -> pd.DataFrame:
-    """Dekadal CHIRPS rainfall (mm) and long-term average by admin 1."""
+    """Dekadal CHIRPS rainfall (mm), 3-month rolling totals and WFP's 3-month anomaly
+    (`r3q`, % of average) by admin 1."""
     df = _load_wfp_table(RAW_RAINFALL)
-    out = _aggregate_adm1(df, ["rfh", "rfh_avg"])
+    out = _aggregate_adm1(df, ["rfh", "rfh_avg", "r3h", "r3h_avg", "r3q"])
     status = df[df["adm_level"] == 1].groupby("date")["version"].first()
     out["version"] = out["date"].map(status)
     return out

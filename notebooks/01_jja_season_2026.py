@@ -89,16 +89,20 @@ plt.show()
 
 # %% [markdown]
 # ## 1. Rainfall: June to August total by admin 1
+#
+# June to August values are WFP's 3-month rolling columns on the 21 August dekad:
+# `r3h` (mm), `r3h_avg` (1989-2018 average, mm) and `r3q` (% of average).
 
 # %%
+# June to August = the 3-month rolling values on the 21 August dekad (1 Jun to 31 Aug):
+# r3h / r3h_avg for amounts, WFP's r3q for % of average.
 jja_rain = (
-    rain[rain.month.isin(JJA)]
-    .groupby(["PCODE", "year"], as_index=False)
-    .agg(rain_mm=("rfh", "sum"), avg_mm=("rfh_avg", "sum"), n_dekads=("rfh", "size"))
+    rain[(rain.month == 8) & (rain.date.dt.day == 21)]
+    .rename(columns={"r3h": "rain_mm", "r3h_avg": "avg_mm", "r3q": "pct_avg"})
+    [["PCODE", "year", "rain_mm", "avg_mm", "pct_avg"]]
+    .reset_index(drop=True)
 )
-assert (jja_rain.n_dekads == 9).all()
-jja_rain["pct_avg"] = 100 * jja_rain.rain_mm / jja_rain.avg_mm
-jja_rain["rank_driest"] = jja_rain.groupby("PCODE").rain_mm.rank(method="min").astype(int)
+jja_rain["rank_driest"] = jja_rain.groupby("PCODE").pct_avg.rank(method="min").astype(int)
 n_years = jja_rain.year.nunique()
 
 fig, axes = plt.subplots(3, 2, figsize=(11, 9), sharex=True)
@@ -150,7 +154,7 @@ plt.show()
 # %%
 summary_rain = jja_rain[jja_rain.year == CURRENT].set_index("PCODE").loc[ORDER]
 driest_years = (
-    jja_rain.sort_values("rain_mm")
+    jja_rain.sort_values("pct_avg")
     .groupby("PCODE")
     .head(5)
     .groupby("PCODE")
