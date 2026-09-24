@@ -1,0 +1,315 @@
+# ---
+# jupyter:
+#   jupytext:
+#     formats: ipynb,py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#   kernelspec:
+#     display_name: Python 3
+#     language: python
+#     name: python3
+# ---
+
+# %% [markdown]
+# # Eritrea: June to August 2026 compared with past seasons
+#
+# - **Rainfall**: CHIRPS dekadal totals by admin 1 (WFP subnational table), 1981 to 2026.
+# - **NDVI**: MODIS dekadal NDVI and % of average by admin 1 (WFP subnational table), 2003 to 2026.
+# - **CDI**: ICPAC East Africa Drought Watch monthly Combined Drought Indicator, 2020 to 2026, from HDX.
+#
+# Season window: the 9 dekads from 1 June to 31 August (JJA). All JJA 2026 rainfall
+# dekads are `final`; only the September 2026 dekads are `prelim`.
+
+# %%
+import matplotlib.pyplot as plt
+import numpy as np
+import ocha_stratus as stratus
+import pandas as pd
+
+from eri_drought import cdi, data
+
+CURRENT = 2026
+JJA = [6, 7, 8]
+C_CURRENT = "#eb6834"
+C_PAST = "#c3c2b7"
+C_AVG = "#0b0b0b"
+INK_2 = "#52514e"
+GRID = "#e1e0d9"
+plt.rcParams.update(
+    {
+        "figure.dpi": 110,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "axes.edgecolor": "#c3c2b7",
+        "axes.grid": True,
+        "axes.grid.axis": "y",
+        "grid.color": GRID,
+        "grid.linewidth": 0.6,
+        "axes.labelcolor": INK_2,
+        "xtick.color": INK_2,
+        "ytick.color": INK_2,
+        "font.size": 9,
+    }
+)
+
+adm1 = data.load_adm1()
+rain = data.load_rainfall_adm1()
+ndvi = data.load_ndvi_adm1()
+ORDER = ["ER1", "ER2", "ER3", "ER4", "ER5", "ER6"]
+LABEL = {p: f"{data.ADM1_NAMES[p]} ({p})" for p in ORDER}
+
+# %% [markdown]
+# ## Admin 1 areas
+
+# %%
+fig, ax = plt.subplots(figsize=(6, 5))
+adm1.plot(ax=ax, color="#f0efec", edgecolor=INK_2, linewidth=0.7)
+for _, r in adm1.iterrows():
+    pt = r.geometry.representative_point()
+    ax.annotate(f"{r.adm1_name}\n{r.PCODE}", (pt.x, pt.y), ha="center", fontsize=8)
+ax.set_axis_off()
+ax.set_title("Eritrea admin 1 (COD-AB via FieldMaps)", loc="left")
+plt.show()
+
+# %% [markdown]
+# ## 1. Rainfall: June to August total by admin 1
+
+# %%
+jja_rain = (
+    rain[rain.month.isin(JJA)]
+    .groupby(["PCODE", "year"], as_index=False)
+    .agg(rain_mm=("rfh", "sum"), avg_mm=("rfh_avg", "sum"), n_dekads=("rfh", "size"))
+)
+assert (jja_rain.n_dekads == 9).all()
+jja_rain["pct_avg"] = 100 * jja_rain.rain_mm / jja_rain.avg_mm
+jja_rain["rank_driest"] = jja_rain.groupby("PCODE").rain_mm.rank(method="min").astype(int)
+n_years = jja_rain.year.nunique()
+
+fig, axes = plt.subplots(3, 2, figsize=(11, 9), sharex=True)
+for ax, p in zip(axes.flat, ORDER):
+    d = jja_rain[jja_rain.PCODE == p]
+    colors = np.where(d.year == CURRENT, C_CURRENT, C_PAST)
+    ax.bar(d.year, d.rain_mm, color=colors, width=0.8)
+    ax.axhline(d.avg_mm.iloc[0], color=C_AVG, lw=1, ls="--")
+    cur = d[d.year == CURRENT].iloc[0]
+    ax.set_title(
+        f"{LABEL[p]}: {CURRENT} = {cur.rain_mm:.0f} mm, "
+        f"{cur.pct_avg:.0f}% of avg, rank {cur.rank_driest} driest of {n_years}",
+        loc="left",
+        fontsize=9,
+    )
+    ax.set_ylabel("JJA rainfall (mm)")
+fig.suptitle(
+    f"June to August rainfall by admin 1, 1981 to {CURRENT} "
+    f"(orange: {CURRENT}; dashed: long-term average)",
+    x=0.01,
+    ha="left",
+)
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# JJA rainfall as % of the long-term average, every year and admin 1.
+
+# %%
+pct = jja_rain.pivot(index="PCODE", columns="year", values="pct_avg").loc[ORDER]
+fig, ax = plt.subplots(figsize=(13, 3.2))
+im = ax.imshow(pct.values, cmap="BrBG", vmin=40, vmax=160, aspect="auto")
+ax.set_yticks(range(len(ORDER)), [LABEL[p] for p in ORDER])
+ax.set_xticks(range(0, n_years, 5), pct.columns[::5])
+ax.grid(False)
+for j in np.where(pct.columns == CURRENT)[0]:
+    ax.add_patch(plt.Rectangle((j - 0.5, -0.5), 1, len(ORDER), fill=False, ec=C_AVG, lw=1.5))
+    for i, v in enumerate(pct.iloc[:, j]):
+        ax.text(j, i, f"{v:.0f}", ha="center", va="center", fontsize=7)
+fig.colorbar(im, ax=ax, label="% of average", shrink=0.9)
+ax.set_title("JJA rainfall, % of long-term average (2026 outlined)", loc="left")
+plt.show()
+
+# %%
+summary_rain = jja_rain[jja_rain.year == CURRENT].set_index("PCODE").loc[ORDER]
+driest_years = (
+    jja_rain.sort_values("rain_mm")
+    .groupby("PCODE")
+    .head(5)
+    .groupby("PCODE")
+    .year.apply(lambda s: ", ".join(map(str, s)))
+)
+summary_rain = summary_rain.assign(
+    adm1=lambda d: d.index.map(data.ADM1_NAMES), five_driest_years=driest_years
+)[["adm1", "rain_mm", "avg_mm", "pct_avg", "rank_driest", "five_driest_years"]].round(0)
+summary_rain
+
+# %% [markdown]
+# Dekad by dekad in 2026 against the spread of 1981 to 2025.
+
+# %%
+fig, axes = plt.subplots(3, 2, figsize=(11, 8), sharex=True)
+for ax, p in zip(axes.flat, ORDER):
+    d = rain[(rain.PCODE == p) & rain.month.between(3, 10)].copy()
+    d["dekad"] = d.date.dt.strftime("%m-%d")
+    past = d[d.year < CURRENT].groupby("dekad").rfh.agg(["min", "max"])
+    avg = d.groupby("dekad").rfh_avg.first()
+    cur = d[d.year == CURRENT].set_index("dekad").rfh
+    x = np.arange(len(past))
+    ax.fill_between(x, past["min"], past["max"], color=C_PAST, alpha=0.5, lw=0, label="1981-2025 range")
+    ax.plot(x, avg.values, color=C_AVG, lw=1, ls="--", label="average")
+    ax.plot(x[: len(cur)], cur.values, color=C_CURRENT, lw=2, marker="o", ms=3, label=str(CURRENT))
+    ax.set_xticks(x[::3], past.index[::3], rotation=45)
+    ax.set_title(LABEL[p], loc="left")
+    ax.set_ylabel("dekadal rainfall (mm)")
+axes.flat[0].legend(frameon=False, fontsize=8)
+fig.suptitle("Dekadal rainfall, March to October", x=0.01, ha="left")
+fig.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ## 2. NDVI by admin 1
+#
+# NDVI starts in July 2002, so seasonal comparisons use 2003 to 2026.
+#
+# JJA mean NDVI is above 100% of average in all six admin 1s in every year from
+# 2019 to 2026. The source table does not state the baseline period of `vim_avg`.
+
+# %%
+jja_ndvi = (
+    ndvi[ndvi.month.isin(JJA) & (ndvi.year >= 2003)]
+    .groupby(["PCODE", "year"], as_index=False)
+    .agg(viq=("viq", "mean"), n_dekads=("viq", "size"))
+)
+assert (jja_ndvi.n_dekads == 9).all()
+jja_ndvi["rank_lowest"] = jja_ndvi.groupby("PCODE").viq.rank(method="min").astype(int)
+n_ndvi = jja_ndvi.year.nunique()
+
+fig, axes = plt.subplots(3, 2, figsize=(11, 9), sharex=True, sharey=True)
+for ax, p in zip(axes.flat, ORDER):
+    d = jja_ndvi[jja_ndvi.PCODE == p]
+    colors = np.where(d.year == CURRENT, C_CURRENT, C_PAST)
+    ax.bar(d.year, d.viq - 100, bottom=100, color=colors, width=0.8)
+    ax.axhline(100, color=C_AVG, lw=1)
+    cur = d[d.year == CURRENT].iloc[0]
+    ax.set_title(
+        f"{LABEL[p]}: {CURRENT} = {cur.viq:.0f}%, rank {cur.rank_lowest} lowest of {n_ndvi}",
+        loc="left",
+        fontsize=9,
+    )
+    ax.set_ylabel("JJA mean NDVI, % of avg")
+fig.suptitle(f"June to August mean NDVI, % of average, 2003 to {CURRENT}", x=0.01, ha="left")
+fig.tight_layout()
+plt.show()
+
+# %%
+fig, axes = plt.subplots(3, 2, figsize=(11, 8), sharex=True, sharey=True)
+for ax, p in zip(axes.flat, ORDER):
+    d = ndvi[(ndvi.PCODE == p) & (ndvi.year >= 2003)].copy()
+    d["dekad"] = d.date.dt.strftime("%m-%d")
+    past = d[d.year < CURRENT].groupby("dekad").viq.agg(["min", "max"])
+    cur = d[d.year == CURRENT].set_index("dekad").viq
+    x = np.arange(len(past))
+    ax.fill_between(x, past["min"], past["max"], color=C_PAST, alpha=0.5, lw=0, label="2003-2025 range")
+    ax.axhline(100, color=C_AVG, lw=1, ls="--")
+    ax.plot(x[: len(cur)], cur.values, color=C_CURRENT, lw=2, label=str(CURRENT))
+    ax.set_xticks(x[::6], past.index[::6], rotation=45)
+    ax.set_title(LABEL[p], loc="left")
+    ax.set_ylabel("NDVI, % of avg")
+axes.flat[0].legend(frameon=False, fontsize=8)
+fig.suptitle(f"Dekadal NDVI % of average: {CURRENT} against 2003-2025", x=0.01, ha="left")
+fig.tight_layout()
+plt.show()
+
+# %%
+latest = ndvi.date.max()
+ndvi_latest = (
+    ndvi[ndvi.date.dt.strftime("%m-%d") == latest.strftime("%m-%d")]
+    .assign(rank_lowest=lambda d: d.groupby("PCODE").viq.rank(method="min").astype(int))
+    .query("year == @CURRENT")
+    .set_index("PCODE")
+    .loc[ORDER, ["adm1_name", "viq", "rank_lowest"]]
+    .round(0)
+)
+print(f"NDVI for the dekad starting {latest:%d %b %Y}, rank among {ndvi.year.nunique()} years with that dekad")
+ndvi_latest
+
+# %% [markdown]
+# ## 3. Combined Drought Indicator (ICPAC)
+#
+# Class values from the EADW CDI factsheet: 1 to 3 Watch (precipitation shortage),
+# 4 to 6 Warning (+ soil moisture anomaly), 7 to 10 Alert (+ vegetation anomaly),
+# 11 to 12 Partial recovery, 13 to 14 Full recovery. Value 0 is not in the
+# factsheet table and is shown as "no class". Value 15 appears in 2022 and 2023
+# files and is not in the factsheet table either.
+#
+# Pixel counts per admin 1 are cached on blob; set `REFRESH = True` to rebuild
+# from HDX.
+
+# %%
+CDI_BLOB = f"{data.BLOB_PREFIX}/processed/cdi_adm1_jja_counts.parquet"
+REFRESH = False
+if REFRESH:
+    counts = cdi.cdi_adm1(list(range(2020, CURRENT + 1)), JJA, adm1)
+    stratus.upload_parquet_to_blob(counts, CDI_BLOB, stage="dev")
+else:
+    counts = stratus.load_parquet_from_blob(CDI_BLOB, stage="dev")
+
+GROUPS = [
+    ("Watch", range(1, 4), "#fab219"),
+    ("Warning", range(4, 7), "#ec835a"),
+    ("Alert", range(7, 11), "#d03b3b"),
+    ("Recovery", range(11, 15), "#86b6ef"),
+    ("Value 15 (not in factsheet)", [15], "#898781"),
+]
+to_group = {v: g for g, vals, _ in GROUPS for v in vals}
+counts["group"] = counts.cdi.map(to_group).fillna("No class")
+share = (
+    counts.groupby(["PCODE", "year", "month", "group"]).n.sum()
+    / counts.groupby(["PCODE", "year", "month"]).n.sum()
+    * 100
+).rename("pct_area").reset_index()
+
+# %%
+years = sorted(share.year.unique())
+fig, axes = plt.subplots(3, 2, figsize=(12, 9), sharey=True)
+for ax, p in zip(axes.flat, ORDER):
+    d = share[share.PCODE == p].pivot_table(
+        index=["year", "month"], columns="group", values="pct_area", fill_value=0
+    )
+    idx = pd.MultiIndex.from_product([years, JJA])
+    d = d.reindex(idx, fill_value=0)
+    x = np.array([i * 4 + j for i in range(len(years)) for j in range(3)], dtype=float)
+    bottom = np.zeros(len(d))
+    for g, _, color in GROUPS:
+        if g in d:
+            ax.bar(x, d[g], bottom=bottom, color=color, width=0.9, label=g, edgecolor="white", lw=0.5)
+            bottom += d[g].values
+    ax.set_xticks(x[1::3], years)
+    ax.set_title(LABEL[p], loc="left")
+    ax.set_ylabel("% of admin 1 area")
+    ax.set_ylim(0, 100)
+handles, labels = axes.flat[0].get_legend_handles_labels()
+for a in axes.flat[1:]:
+    for h, lab in zip(*a.get_legend_handles_labels()):
+        if lab not in labels:
+            handles.append(h)
+            labels.append(lab)
+fig.legend(handles, labels, loc="upper right", ncol=5, frameon=False)
+fig.suptitle("CDI class share of area: June, July, August bars for each year", x=0.01, ha="left")
+fig.tight_layout(rect=(0, 0, 1, 0.95))
+plt.show()
+
+# %%
+cdi_cols = [g for g, _, _ in GROUPS]
+cdi_tbl = (
+    share.pivot_table(
+        index=["PCODE", "year", "month"], columns="group", values="pct_area", fill_value=0
+    )
+    .reindex(columns=cdi_cols, fill_value=0)
+    .groupby(["PCODE", "year"])
+    .mean()
+    .round(0)
+)
+cdi_tbl["watch_warning_alert"] = cdi_tbl.reindex(
+    columns=["Watch", "Warning", "Alert"], fill_value=0
+).sum(axis=1)
+print("Mean share of area over Jun, Jul, Aug (%)")
+cdi_tbl
