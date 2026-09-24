@@ -266,8 +266,9 @@ ndvi_latest
 # Class values from the EADW CDI factsheet: 1 to 3 Watch (precipitation shortage),
 # 4 to 6 Warning (+ soil moisture anomaly), 7 to 10 Alert (+ vegetation anomaly),
 # 11 to 12 Partial recovery, 13 to 14 Full recovery. Value 0 is not in the
-# factsheet table and is shown as "no class". Value 15 appears in 2022 and 2023
-# files and is not in the factsheet table either.
+# factsheet table and is shown as "no class". Value 15 appears only in the 2022 and
+# 2023 files, is not in the factsheet, and is left out of the charts; shares are still
+# of the full admin 1 area, so those bars are shorter by the value-15 area.
 #
 # Pixel counts per admin 1 are cached on blob; set `REFRESH = True` to rebuild
 # from HDX.
@@ -286,10 +287,10 @@ GROUPS = [
     ("Warning", range(4, 7), DRY[1]),
     ("Alert", range(7, 11), DRY[2]),
     ("Recovery", range(11, 15), C_PAST),
-    ("Value 15 (not in factsheet)", [15], "white"),
 ]
 to_group = {v: g for g, vals, _ in GROUPS for v in vals}
 counts["group"] = counts.cdi.map(to_group).fillna("No class")
+counts.loc[counts.cdi == 15, "group"] = "Not documented"  # not drawn
 share = (
     counts.groupby(["PCODE", "year", "month", "group"]).n.sum()
     / counts.groupby(["PCODE", "year", "month"]).n.sum()
@@ -309,11 +310,7 @@ for ax, p in zip(axes.flat, ORDER):
     bottom = np.zeros(len(d))
     for g, _, color in GROUPS:
         if g in d:
-            hatched = g.startswith("Value 15")
-            ax.bar(
-                x, d[g], bottom=bottom, color=color, width=0.9, label=g,
-                edgecolor=C_AVG if hatched else "white", lw=0.5, hatch="////" if hatched else None,
-            )
+            ax.bar(x, d[g], bottom=bottom, color=color, width=0.9, label=g, edgecolor="white", lw=0.5)
             bottom += d[g].values
     ax.set_xticks(x[1::3], years)
     ax.set_title(LABEL[p], loc="left")
@@ -339,7 +336,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 
 MAP_GROUPS = [("No class", [0], NEUTRAL)] + [
-    (g, vals, "#898781" if g.startswith("Value 15") else color) for g, vals, color in GROUPS
+    (g, vals, color) for g, vals, color in GROUPS
 ]
 map_cmap = ListedColormap([c for _, _, c in MAP_GROUPS])
 value_to_idx = {v: i for i, (_, vals, _) in enumerate(MAP_GROUPS) for v in vals}
