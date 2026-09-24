@@ -5,6 +5,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.19.5
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -23,17 +25,24 @@
 
 # %%
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import ocha_stratus as stratus
 import pandas as pd
 
 from eri_drought import cdi, data
+from eri_drought.constants import PROJECT_PREFIX
 
 CURRENT = 2026
 JJA = [6, 7, 8]
-C_CURRENT = "#eb6834"
+# One colour system for every chart:
+#   blue = 2026, greys = past years / ranges / averages,
+#   one orange ramp (light -> dark) = dryness (rainfall deficit, CDI Watch -> Alert).
+C_CURRENT = "#2a78d6"
 C_PAST = "#c3c2b7"
-C_AVG = "#0b0b0b"
+C_AVG = "#52514e"
+DRY = ["#ef9868", "#d9591f", "#8f2f0b"]
+NEUTRAL = "#f0efec"
 INK_2 = "#52514e"
 GRID = "#e1e0d9"
 plt.rcParams.update(
@@ -64,7 +73,7 @@ LABEL = {p: f"{data.ADM1_NAMES[p]} ({p})" for p in ORDER}
 
 # %%
 fig, ax = plt.subplots(figsize=(6, 5))
-adm1.plot(ax=ax, color="#f0efec", edgecolor=INK_2, linewidth=0.7)
+adm1.plot(ax=ax, color=NEUTRAL, edgecolor=INK_2, linewidth=0.7)
 for _, r in adm1.iterrows():
     pt = r.geometry.representative_point()
     ax.annotate(f"{r.adm1_name}\n{r.PCODE}", (pt.x, pt.y), ha="center", fontsize=8)
@@ -102,7 +111,7 @@ for ax, p in zip(axes.flat, ORDER):
     ax.set_ylabel("JJA rainfall (mm)")
 fig.suptitle(
     f"June to August rainfall by admin 1, 1981 to {CURRENT} "
-    f"(orange: {CURRENT}; dashed: long-term average)",
+    f"(blue: {CURRENT}; dashed: long-term average)",
     x=0.01,
     ha="left",
 )
@@ -115,16 +124,21 @@ plt.show()
 # %%
 pct = jja_rain.pivot(index="PCODE", columns="year", values="pct_avg").loc[ORDER]
 fig, ax = plt.subplots(figsize=(13, 3.2))
-im = ax.imshow(pct.values, cmap="BrBG", vmin=40, vmax=160, aspect="auto")
+dry_cmap = LinearSegmentedColormap.from_list("dry", [DRY[2], DRY[1], DRY[0], NEUTRAL])
+im = ax.imshow(pct.values, cmap=dry_cmap, vmin=40, vmax=100, aspect="auto")
 ax.set_yticks(range(len(ORDER)), [LABEL[p] for p in ORDER])
 ax.set_xticks(range(0, n_years, 5), pct.columns[::5])
 ax.grid(False)
 for j in np.where(pct.columns == CURRENT)[0]:
-    ax.add_patch(plt.Rectangle((j - 0.5, -0.5), 1, len(ORDER), fill=False, ec=C_AVG, lw=1.5))
+    ax.add_patch(plt.Rectangle((j - 0.5, -0.5), 1, len(ORDER), fill=False, ec=C_CURRENT, lw=2))
     for i, v in enumerate(pct.iloc[:, j]):
-        ax.text(j, i, f"{v:.0f}", ha="center", va="center", fontsize=7)
-fig.colorbar(im, ax=ax, label="% of average", shrink=0.9)
-ax.set_title("JJA rainfall, % of long-term average (2026 outlined)", loc="left")
+        ax.text(j, i, f"{v:.0f}", ha="center", va="center", fontsize=7,
+                color="white" if v < 65 else "#0b0b0b")
+fig.colorbar(im, ax=ax, label="% of average", shrink=0.9, extend="both")
+ax.set_title(
+    "JJA rainfall, % of long-term average (100% and above: grey; 2026 outlined in blue)",
+    loc="left",
+)
 plt.show()
 
 # %%
@@ -244,7 +258,7 @@ ndvi_latest
 # from HDX.
 
 # %%
-CDI_BLOB = f"{data.BLOB_PREFIX}/processed/cdi_adm1_jja_counts.parquet"
+CDI_BLOB = f"{PROJECT_PREFIX}/processed/cdi_adm1_jja_counts.parquet"
 REFRESH = False
 if REFRESH:
     counts = cdi.cdi_adm1(list(range(2020, CURRENT + 1)), JJA, adm1)
@@ -253,11 +267,11 @@ else:
     counts = stratus.load_parquet_from_blob(CDI_BLOB, stage="dev")
 
 GROUPS = [
-    ("Watch", range(1, 4), "#fab219"),
-    ("Warning", range(4, 7), "#ec835a"),
-    ("Alert", range(7, 11), "#d03b3b"),
-    ("Recovery", range(11, 15), "#86b6ef"),
-    ("Value 15 (not in factsheet)", [15], "#898781"),
+    ("Watch", range(1, 4), DRY[0]),
+    ("Warning", range(4, 7), DRY[1]),
+    ("Alert", range(7, 11), DRY[2]),
+    ("Recovery", range(11, 15), C_PAST),
+    ("Value 15 (not in factsheet)", [15], "white"),
 ]
 to_group = {v: g for g, vals, _ in GROUPS for v in vals}
 counts["group"] = counts.cdi.map(to_group).fillna("No class")
@@ -280,7 +294,11 @@ for ax, p in zip(axes.flat, ORDER):
     bottom = np.zeros(len(d))
     for g, _, color in GROUPS:
         if g in d:
-            ax.bar(x, d[g], bottom=bottom, color=color, width=0.9, label=g, edgecolor="white", lw=0.5)
+            hatched = g.startswith("Value 15")
+            ax.bar(
+                x, d[g], bottom=bottom, color=color, width=0.9, label=g,
+                edgecolor=C_AVG if hatched else "white", lw=0.5, hatch="////" if hatched else None,
+            )
             bottom += d[g].values
     ax.set_xticks(x[1::3], years)
     ax.set_title(LABEL[p], loc="left")
@@ -295,6 +313,47 @@ for a in axes.flat[1:]:
 fig.legend(handles, labels, loc="upper right", ncol=5, frameon=False)
 fig.suptitle("CDI class share of area: June, July, August bars for each year", x=0.01, ha="left")
 fig.tight_layout(rect=(0, 0, 1, 0.95))
+plt.show()
+
+# %% [markdown]
+# CDI maps for June, July and August 2026, from the Eritrea COGs on blob, masked to
+# the country border.
+
+# %%
+from matplotlib.colors import ListedColormap
+from matplotlib.patches import Patch
+
+MAP_GROUPS = [("No class", [0], NEUTRAL)] + [
+    (g, vals, "#898781" if g.startswith("Value 15") else color) for g, vals, color in GROUPS
+]
+map_cmap = ListedColormap([c for _, _, c in MAP_GROUPS])
+value_to_idx = {v: i for i, (_, vals, _) in enumerate(MAP_GROUPS) for v in vals}
+
+fig, axes = plt.subplots(1, 3, figsize=(13, 4.8))
+present = set()
+for ax, month in zip(axes, JJA):
+    da = stratus.open_blob_cog(cdi.cog_blob_name(CURRENT, month)).squeeze(drop=True)
+    da = da.rio.clip(list(adm1.geometry), adm1.crs, drop=True).load()
+    vals = da.values
+    idx = np.full(vals.shape, np.nan)
+    for v, i in value_to_idx.items():
+        idx[vals == v] = i
+    present |= {int(i) for i in np.unique(idx[~np.isnan(idx)])}
+    xs, ys = da.x.values, da.y.values
+    ax.imshow(
+        idx, cmap=map_cmap, vmin=-0.5, vmax=len(MAP_GROUPS) - 0.5, interpolation="nearest",
+        extent=(xs[0], xs[-1], ys[-1], ys[0]),
+    )
+    adm1.boundary.plot(ax=ax, color=C_AVG, linewidth=0.6)
+    ax.set_title(pd.Timestamp(CURRENT, month, 1).strftime("%B %Y"), loc="left")
+    ax.set_axis_off()
+fig.legend(
+    [Patch(facecolor=MAP_GROUPS[i][2], edgecolor=C_AVG, lw=0.4) for i in sorted(present)],
+    [MAP_GROUPS[i][0] for i in sorted(present)],
+    loc="lower center", ncol=len(present), frameon=False,
+)
+fig.suptitle("ICPAC Combined Drought Indicator, Eritrea", x=0.01, ha="left")
+fig.tight_layout(rect=(0, 0.06, 1, 1))
 plt.show()
 
 # %%

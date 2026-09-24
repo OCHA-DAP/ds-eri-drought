@@ -4,9 +4,10 @@ import geopandas as gpd
 import ocha_stratus as stratus
 import pandas as pd
 
-BLOB_PREFIX = "ds-eri-drought"
-RAW_RAINFALL = f"{BLOB_PREFIX}/raw/eri-rainfall-subnat-full.csv"
-RAW_NDVI = f"{BLOB_PREFIX}/raw/eri-ndvi-subnat-full.csv"
+from eri_drought.constants import PROJECT_PREFIX
+
+RAW_RAINFALL = f"{PROJECT_PREFIX}/raw/eri-rainfall-subnat-full.csv"
+RAW_NDVI = f"{PROJECT_PREFIX}/raw/eri-ndvi-subnat-full.csv"
 
 # COD-AB admin 1 names (FieldMaps `adm1_src` -> `adm1_name`)
 ADM1_NAMES = {

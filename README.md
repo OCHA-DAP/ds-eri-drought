@@ -19,9 +19,15 @@ Everything is on the dev blob, `projects` container:
 | `ds-eri-drought/raw/eri-rainfall-subnat-full.csv` | WFP dekadal rainfall, admin 1 and 2 |
 | `ds-eri-drought/raw/eri-ndvi-subnat-full.csv` | WFP dekadal NDVI, admin 1 and 2 |
 | `ds-eri-drought/processed/cdi_adm1_jja_counts.parquet` | CDI pixel counts per admin 1, class value, Jun to Aug 2020 to 2026 |
+| `ds-eri-drought/processed/icpac_cdi/eri_cdi_monthly_YYYY-MM.tif` | Monthly CDI COGs clipped to Eritrea, every month published on HDX from 2020 to 2026 |
 
-CDI GeoTIFFs are not stored: `eri_drought.cdi` reads only the Eritrea window from HDX over
-HTTP range requests. Admin 1 boundaries come from FieldMaps via `ocha-stratus`.
+The CDI COGs are the ICPAC regional GeoTIFFs cut to the Eritrea admin 1 bounding box plus
+0.1°: a rectangle, not masked to the border, values unchanged (float32, NaN nodata).
+`eri_drought.cdi.save_eritrea_cogs` builds them by reading only that window from HDX over
+HTTP range requests; reruns skip months already on blob. Load one with
+`stratus.open_blob_cog(cdi.cog_blob_name(2026, 8))`.
+
+Admin 1 boundaries come from FieldMaps via `ocha-stratus`.
 
 ## Notes on the inputs
 
