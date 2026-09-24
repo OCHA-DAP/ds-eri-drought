@@ -165,26 +165,32 @@ summary_rain = summary_rain.assign(
 summary_rain
 
 # %% [markdown]
-# Dekad by dekad in 2026 against the spread of 1981 to 2025.
+# Dekad by dekad in 2026 against the spread of 1981 to 2025, with the two driest June to
+# August seasons on record (1984, 1990) and the 2015 El Nino season.
 
 # %%
-fig, axes = plt.subplots(3, 2, figsize=(11, 8), sharex=True)
+COMPARE = [(1984, "#4a3aa7", "--"), (1990, "#1baf7a", ":"), (2015, "#e87ba4", "-.")]
+fig, axes = plt.subplots(3, 2, figsize=(11, 8.5), sharex=True)
 for ax, p in zip(axes.flat, ORDER):
     d = rain[(rain.PCODE == p) & rain.month.between(3, 10)].copy()
     d["dekad"] = d.date.dt.strftime("%m-%d")
     past = d[d.year < CURRENT].groupby("dekad").rfh.agg(["min", "max"])
     avg = d.groupby("dekad").rfh_avg.first()
-    cur = d[d.year == CURRENT].set_index("dekad").rfh
     x = np.arange(len(past))
-    ax.fill_between(x, past["min"], past["max"], color=C_PAST, alpha=0.5, lw=0, label="1981-2025 range")
-    ax.plot(x, avg.values, color=C_AVG, lw=1, ls="--", label="average")
-    ax.plot(x[: len(cur)], cur.values, color=C_CURRENT, lw=2, marker="o", ms=3, label=str(CURRENT))
+    ax.fill_between(x, past["min"], past["max"], color=C_PAST, alpha=0.35, lw=0, label="1981-2025 range")
+    ax.plot(x, avg.values, color=C_AVG, lw=1, label="average")
+    for year, color, ls in COMPARE:
+        yr = d[d.year == year].set_index("dekad").rfh.reindex(past.index)
+        ax.plot(x, yr.values, color=color, lw=1.5, ls=ls, label=str(year))
+    cur = d[d.year == CURRENT].set_index("dekad").rfh
+    ax.plot(x[: len(cur)], cur.values, color=C_CURRENT, lw=2.5, marker="o", ms=3, label=str(CURRENT))
     month_ticks(ax, past.index)
     ax.set_title(LABEL[p], loc="left")
     ax.set_ylabel("10-day rainfall (mm)")
-axes.flat[0].legend(frameon=False, fontsize=8)
+handles, labels = axes.flat[0].get_legend_handles_labels()
+fig.legend(handles, labels, loc="upper right", ncol=len(labels), frameon=False, fontsize=8)
 fig.suptitle("Rainfall every 10 days, March to October", x=0.01, ha="left")
-fig.tight_layout()
+fig.tight_layout(rect=(0, 0, 1, 0.96))
 plt.show()
 
 # %% [markdown]
