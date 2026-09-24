@@ -31,8 +31,10 @@ Admin 1 boundaries come from FieldMaps via `ocha-stratus`.
 
 ## Notes on the inputs
 
-- ER3 has two `adm_id`s (1206 and 1211) in the WFP tables; admin 1 values combine them
-  weighted by `n_pixels`.
+- ER3 has two `adm_id`s in the WFP tables: 1211 (mainland, 1141 pixels) and 1206 (37 pixels,
+  matching the Red Sea islands by area). Only 1211 is used, so ER3 values are mainland only.
+- June to August rainfall uses WFP's 3-month columns (`r3h`, `r3h_avg`, `r3q`) on the
+  21 August dekad.
 - CDI class values follow the EADW factsheet: 1 to 3 Watch, 4 to 6 Warning, 7 to 10 Alert,
   11 to 12 Partial recovery, 13 to 14 Full recovery. Values 0 and 15 are not in the factsheet
   table.

@@ -27,13 +27,15 @@ def _load_wfp_table(blob_name: str) -> pd.DataFrame:
     return df
 
 
-def _aggregate_adm1(df: pd.DataFrame, value_cols: list[str]) -> pd.DataFrame:
-    """Pixel-weighted admin 1 values.
+# ER3 (Semienawi Keih Bahri) has two admin 1 polygons in the WFP tables: 1211 is the
+# mainland (1141 pixels); 1206 (37 pixels) matches the Red Sea islands by area and is
+# excluded, so ER3 values are the mainland only.
+EXCLUDED_ADM_IDS = [1206]
 
-    ER3 appears under two `adm_id`s (two polygons sharing the PCODE), so rows
-    are combined by PCODE with `n_pixels` as the weight.
-    """
-    adm1 = df[df["adm_level"] == 1].copy()
+
+def _aggregate_adm1(df: pd.DataFrame, value_cols: list[str]) -> pd.DataFrame:
+    """Pixel-weighted admin 1 values (one row per PCODE and date)."""
+    adm1 = df[(df["adm_level"] == 1) & ~df["adm_id"].isin(EXCLUDED_ADM_IDS)].copy()
     for col in value_cols:
         adm1[col] = adm1[col] * adm1["n_pixels"]
     keys = ["date", "year", "month", "PCODE"]
