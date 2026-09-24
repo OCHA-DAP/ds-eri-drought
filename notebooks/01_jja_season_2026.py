@@ -140,13 +140,12 @@ ax.set_yticks(range(len(ORDER)), [LABEL[p] for p in ORDER])
 ax.set_xticks(range(0, n_years, 5), pct.columns[::5])
 ax.grid(False)
 for j in np.where(pct.columns == CURRENT)[0]:
-    ax.add_patch(plt.Rectangle((j - 0.5, -0.5), 1, len(ORDER), fill=False, ec=C_CURRENT, lw=2))
     for i, v in enumerate(pct.iloc[:, j]):
         ax.text(j, i, f"{v:.0f}", ha="center", va="center", fontsize=7,
                 color="white" if v < 65 else "#0b0b0b")
 fig.colorbar(im, ax=ax, label="% of average", shrink=0.9, extend="both")
 ax.set_title(
-    "June to August rainfall, % of 1989-2018 average (100% and above: grey; 2026 outlined in blue)",
+    "June to August rainfall, % of 1989-2018 average (100% and above: grey)",
     loc="left",
 )
 plt.show()
