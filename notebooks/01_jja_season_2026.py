@@ -166,10 +166,10 @@ summary_rain
 
 # %% [markdown]
 # Dekad by dekad in 2026 against the spread of 1981 to 2025, with the two driest June to
-# August seasons on record (1984, 1990) and the 2015 El Nino season.
+# August seasons on record (1984, 1990).
 
 # %%
-COMPARE = [(1984, "#4a3aa7", "--"), (1990, "#1baf7a", ":"), (2015, "#e87ba4", "-.")]
+COMPARE = [(1984, "#4a3aa7", "--"), (1990, "#1baf7a", ":")]
 fig, axes = plt.subplots(3, 2, figsize=(11, 8.5), sharex=True)
 for ax, p in zip(axes.flat, ORDER):
     d = rain[(rain.PCODE == p) & rain.month.between(3, 10)].copy()
