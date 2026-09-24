@@ -131,7 +131,7 @@ plt.show()
 # %% [markdown]
 # JJA rainfall as % of the long-term average, every year and admin 1.
 
-# %%
+# %% tags=["fig-rainfall-heatmap"]
 pct = jja_rain.pivot(index="PCODE", columns="year", values="pct_avg").loc[ORDER]
 fig, ax = plt.subplots(figsize=(13, 3.2))
 dry_cmap = LinearSegmentedColormap.from_list("dry", [DRY[2], DRY[1], DRY[0], NEUTRAL])
@@ -168,7 +168,7 @@ summary_rain
 # Dekad by dekad in 2026 against the spread of 1981 to 2025, with the two driest June to
 # August seasons on record (1984, 1990).
 
-# %%
+# %% tags=["fig-rainfall-10day"]
 COMPARE = [(1984, "#4a3aa7", "--"), (1990, "#1baf7a", ":")]
 fig, axes = plt.subplots(3, 2, figsize=(11, 8.5), sharex=True)
 for ax, p in zip(axes.flat, ORDER):
@@ -228,7 +228,7 @@ fig.suptitle(f"June to August mean NDVI, % of average, 2003 to {CURRENT}", x=0.0
 fig.tight_layout()
 plt.show()
 
-# %%
+# %% tags=["fig-ndvi-10day"]
 fig, axes = plt.subplots(3, 2, figsize=(11, 8), sharex=True, sharey=True)
 for ax, p in zip(axes.flat, ORDER):
     d = ndvi[(ndvi.PCODE == p) & (ndvi.year >= 2003)].copy()
@@ -297,7 +297,7 @@ share = (
     * 100
 ).rename("pct_area").reset_index()
 
-# %%
+# %% tags=["fig-cdi-bars"]
 years = sorted(share.year.unique())
 fig, axes = plt.subplots(3, 2, figsize=(12, 9), sharey=True)
 for ax, p in zip(axes.flat, ORDER):
@@ -331,7 +331,7 @@ plt.show()
 # CDI maps for June, July and August 2026, from the Eritrea COGs on blob, masked to
 # the country border.
 
-# %%
+# %% tags=["fig-cdi-maps"]
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Eritrea Drought Monitoring</title>
+<meta name="description" content="Season monitoring for Eritrea: rainfall, vegetation and drought indicators.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --ground: #f6f5f1;
+    --surface: #fcfcfb;
+    --ink: #1b1a17;
+    --ink-2: #52514e;
+    --muted: #7a776f;
+    --rule: #dcd9d0;
+    --dry: #8f2f0b;
+    --blue: #2a78d6;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    --cond: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --ground: #161614;
+      --surface: #1f1f1d;
+      --ink: #ecebe6;
+      --ink-2: #c3c2b7;
+      --muted: #9a978e;
+      --rule: #34332f;
+      --dry: #f0a07a;
+      --blue: #6da7ec;
+    }
+  }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 400 16px/1.6 var(--sans); padding-inline: 20px; padding-block: 48px 64px; }
+  .wrap { max-width: 880px; margin: 0 auto; display: grid; gap: 36px; }
+  .eyebrow { font: 500 12px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dry); }
+  h1 { font: 600 clamp(30px, 5vw, 44px)/1.1 var(--cond); margin: 8px 0 12px; text-wrap: balance; }
+  p { margin: 0; max-width: 640px; color: var(--ink-2); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .card { display: grid; gap: 8px; padding: 20px; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; color: inherit; text-decoration: none; }
+  .card:hover, .card:focus-visible { border-color: var(--ink-2); }
+  .card:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .card .kind { font: 500 11px/1 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .card h2 { font: 600 21px/1.25 var(--cond); margin: 0; color: var(--ink); }
+  .card p { font-size: 14px; }
+  .card .go { font-size: 14px; color: var(--blue); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Eritrea</div>
+    <h1>Eritrea drought monitoring</h1>
+    <p>How Eritrea's rainy seasons compare with past years, from satellite rainfall, vegetation and ICPAC's drought indicator.</p>
+  </header>
+  <div class="cards">
+    <a class="card" href="season-2026/">
+      <span class="kind">Report · September 2026</span>
+      <h2>How Eritrea's 2026 rainy season is going</h2>
+      <p>June to August 2026 rainfall, vegetation and drought indicator, compared with every season since 1981.</p>
+      <span class="go">Read the report &rarr;</span>
+    </a>
+    <a class="card" href="https://github.com/OCHA-DAP/ds-eri-drought">
+      <span class="kind">Code · GitHub</span>
+      <h2>Analysis notebook and code</h2>
+      <p>The notebook behind the report, with the full set of charts and tables by region.</p>
+      <span class="go">Open the repository &rarr;</span>
+    </a>
+  </div>
+</div>
+</body>
+</html>

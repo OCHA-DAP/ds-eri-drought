@@ -10,6 +10,12 @@ Eritrea June to August (JJA) 2026 season compared with past seasons, by admin 1:
 The analysis is in [`notebooks/01_jja_season_2026.ipynb`](notebooks/01_jja_season_2026.ipynb)
 (paired with a `py:percent` script via jupytext).
 
+Report site: <https://ocha-dap.github.io/ds-eri-drought/>. `pages/` holds the landing page and
+the report (`pages/season-2026/`); `scripts/build_pages.py` assembles `_site/`, writing each
+notebook cell tagged `fig-<name>` to `season-2026/figs/<name>.png`, so rendered charts are never
+committed. `.github/workflows/pages.yml` deploys on push to `main`. Re-execute the notebook and
+commit it to update the charts.
+
 ## Data
 
 Everything is on the dev blob, `projects` container:

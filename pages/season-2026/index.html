@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Eritrea Kiremti 2026</title>
+<meta name="description" content="Eritrea's June to August 2026 rains compared with past seasons: rainfall, vegetation and the ICPAC drought indicator.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f6f5f1;
+    --surface: #fcfcfb;
+    --ink: #1b1a17;
+    --ink-2: #52514e;
+    --muted: #7a776f;
+    --rule: #dcd9d0;
+    --dry: #8f2f0b;
+    --dry-soft: #f3e3d8;
+    --blue: #2a78d6;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    --cond: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #161614;
+      --surface: #fcfcfb;
+      --ink: #ecebe6;
+      --ink-2: #c3c2b7;
+      --muted: #9a978e;
+      --rule: #34332f;
+      --dry: #f0a07a;
+      --dry-soft: #3a241a;
+      --blue: #6da7ec;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #161614;
+    --surface: #fcfcfb;
+    --ink: #ecebe6;
+    --ink-2: #c3c2b7;
+    --muted: #9a978e;
+    --rule: #34332f;
+    --dry: #f0a07a;
+    --dry-soft: #3a241a;
+    --blue: #6da7ec;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 400 16px/1.6 var(--sans);
+    padding-inline: 20px;
+    padding-block: 40px 64px;
+  }
+  .page { max-width: 1040px; margin: 0 auto; display: grid; gap: 56px; }
+  .prose { max-width: 680px; }
+
+  header { display: grid; gap: 14px; border-bottom: 1px solid var(--rule); padding-bottom: 28px; }
+  .eyebrow {
+    font: 500 12px/1.2 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dry);
+  }
+  h1 {
+    font: 600 clamp(32px, 5vw, 48px)/1.08 var(--cond);
+    letter-spacing: -0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .lede { font-size: 19px; line-height: 1.55; color: var(--ink); margin: 0; max-width: 680px; }
+  .meta { font: 400 13px/1.4 var(--mono); color: var(--muted); margin: 0; }
+
+  .headline {
+    display: flex; flex-wrap: wrap; gap: 12px 36px;
+    padding: 18px 20px;
+    background: var(--dry-soft);
+    border-radius: 6px;
+    max-width: 680px;
+  }
+  .headline div { display: grid; gap: 2px; }
+  .headline b { font: 600 28px/1.1 var(--cond); color: var(--dry); font-variant-numeric: tabular-nums; }
+  .headline span { font-size: 13px; color: var(--ink-2); }
+
+  section { display: grid; gap: 20px; }
+  h2 {
+    font: 600 26px/1.2 var(--cond);
+    margin: 0;
+    text-wrap: balance;
+  }
+  p { margin: 0; }
+  .prose { display: grid; gap: 14px; }
+
+  figure { margin: 0; display: grid; gap: 10px; }
+  figure .plate {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 12px;
+    overflow-x: auto;
+  }
+  figure img { display: block; width: 100%; height: auto; min-width: 560px; }
+  figcaption { font-size: 14px; line-height: 1.5; color: var(--ink-2); max-width: 760px; }
+  figcaption .fig { font: 500 12px/1 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-right: 8px; }
+
+  a { color: var(--blue); text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+  @media (max-width: 600px) {
+    body { font-size: 15px; padding-inline: 16px; }
+    .lede { font-size: 17px; }
+    .page { gap: 44px; }
+  }
+  html { color-scheme: light; }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  .home-link { display: inline-block; margin-bottom: 20px; padding: 6px 12px; font: 500 13px/1 var(--sans);
+    color: var(--ink-2); background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; text-decoration: none; }
+  .home-link:hover { border-color: var(--ink-2); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .home-link { background: transparent; } }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <nav><a class="home-link" href="../">&larr; Eritrea drought monitoring</a></nav>
+  <header>
+    <div class="eyebrow">Eritrea · Kiremti season · June to August 2026</div>
+    <h1>How Eritrea's 2026 rainy season is going</h1>
+    <p class="lede">The June to August rains were among the poorest Eritrea has had since records began in 1981. Vegetation is falling fast after a good start to the year, and the dry area grew through the season.</p>
+    <div class="headline" aria-label="Key figures">
+      <div><b>71%</b><span>of the 1989–2018 average, June to August</span></div>
+      <div><b>3rd driest</b><span>since 1981, after 1984 and 1990</span></div>
+    </div>
+    <p class="meta">Updated 24 September 2026 · September rainfall is still preliminary</p>
+  </header>
+
+  <section>
+    <h2>Rainfall</h2>
+    <div class="prose">
+      <p>This season is one of the driest on record. Every region got well below its normal rainfall from June to August. Since 1981, only 1984 and 1990 were drier across the country, and 1991 was about as dry. This isn't a patchy or local shortfall: the whole country missed out on its main rains.</p>
+    </div>
+    <figure>
+      <div class="plate"><img src="figs/rainfall-heatmap.png" alt="Heatmap of June to August rainfall as a percentage of the 1989 to 2018 average for each of Eritrea's six regions, 1981 to 2026. 2026 is shaded well below average in every region: 79% Debubawi Keih Bahri, 64% Maekel, 62% Semienawi Keih Bahri, 76% Anseba, 73% Gash Barka, 68% Debub."></div>
+      <figcaption><span class="fig">Figure 1</span>June to August rainfall by region, as a share of the 1989–2018 average. Orange shades are below average; years at or above average are grey.</figcaption>
+    </figure>
+    <figure>
+      <div class="plate"><img src="figs/rainfall-10day.png" alt="Six panels, one per region, of rainfall every 10 days from March to October. The 2026 line sits below the average line through most of June to August in every region, alongside the 1984 and 1990 seasons and the 1981 to 2025 range."></div>
+      <figcaption><span class="fig">Figure 2</span>Rainfall every 10 days, March to October. 2026 (blue) against the two driest June to August seasons on record, 1984 and 1990. The grey band is the range of 1981–2025.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Vegetation</h2>
+    <div class="prose">
+      <p>Above-normal rains from March to May boosted vegetation early in the year, but the main June to August rains, which bring most of the year's rainfall, failed.</p>
+      <p>Vegetation peaked in early May and has fallen steadily since June. Some areas dropped below normal in late July, and more in late August. Other areas are still above normal but falling. The early-season greenness is running out, and the steady downward trend suggests conditions will keep getting worse over the coming weeks.</p>
+    </div>
+    <figure>
+      <div class="plate"><img src="figs/ndvi-10day.png" alt="Six panels, one per region, of vegetation (NDVI) as a percentage of average every 10 days in 2026 against the 2003 to 2025 range. Every region peaks in May and declines from June; Maekel and Gash Barka fall below 100%."></div>
+      <figcaption><span class="fig">Figure 3</span>Vegetation (NDVI) every 10 days as a share of average: 2026 (blue) against the range of 2003–2025. The dashed line is average.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>Drought indicator</h2>
+    <div class="prose">
+      <p>ICPAC's drought indicator shows the dry conditions spreading steadily from June to August. They started in the south and by August covered most of the south and centre of the country, and a strip along the northern coast.</p>
+      <p>So far the indicator only shows the lack of rain. It hasn't yet picked up effects on soil moisture or vegetation, which follow a rainfall shortage.</p>
+    </div>
+    <figure>
+      <div class="plate"><img src="figs/cdi-maps.png" alt="Three maps of Eritrea for June, July and August 2026 showing areas under Watch (rainfall shortage) in orange. The orange area grows each month, covering most of the south and centre by August. No area is at Warning or Alert."></div>
+      <figcaption><span class="fig">Figure 4</span>ICPAC Combined Drought Indicator, June, July and August 2026. Watch means a rainfall shortage. No part of Eritrea reached Warning (soil moisture also affected) or Alert (vegetation also affected).</figcaption>
+    </figure>
+    <figure>
+      <div class="plate"><img src="figs/cdi-bars.png" alt="Six panels, one per region, of the share of area at each drought indicator level for June, July and August of each year from 2020 to 2026. 2026 has the largest area under Watch in every region, reaching 100% of Debub and Maekel in August."></div>
+      <figcaption><span class="fig">Figure 5</span>Share of each region's area at each drought indicator level, with one bar each for June, July and August, 2020–2026.</figcaption>
+    </figure>
+  </section>
+
+</div>
+</body>
+</html>
